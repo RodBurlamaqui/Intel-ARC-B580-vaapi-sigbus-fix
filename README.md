@@ -69,7 +69,7 @@ Confirmed on Arc B580 (Battlemage G21). Upstream also reports DG2 (A750/A770).
 ## Install
 
 ```bash
-wget https://github.com/RodBurlamaqui/arc-b580-vaapi-sigbus-fix/releases/latest/download/intel-media-va-driver-non-free_25.2.3+ds1-1+smallbar1_amd64.deb
+wget https://github.com/RodBurlamaqui/Intel-ARC-B580-vaapi-sigbus-fix/releases/latest/download/intel-media-va-driver-non-free_25.2.3+ds1-1+smallbar1_amd64.deb
 sudo apt install ./intel-media-va-driver-non-free_25.2.3+ds1-1+smallbar1_amd64.deb
 ```
 

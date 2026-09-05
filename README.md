@@ -149,6 +149,37 @@ Ruled out by direct testing on this hardware — save yourself the reboots:
 - **Newer GPU firmware (FWCODE / OptionROM).** Identical on FWCODE 21.1137 and
   21.1182, and on OptionROM code 23.1051.0.0 and 23.1066.0.0 (LVFS, Sept 2026).
   The crash is in `iHD_drv_video.so`; no firmware image reaches that code path.
+
+#### Firmware versions tested
+
+Every GPU firmware component was flashed to the newest version LVFS offers
+(September 2026) and the crash reproduced identically on both sides.
+
+| Component | Before | After | Effect on the SIGBUS |
+|---|---|---|---|
+| FWCODE | `21.1137` | **`21.1182`** | none |
+| OptionROM Code | `23.1051.0.0` | **`23.1066.0.0`** | none |
+| FWDATA | `203.1` | `203.1` | LVFS offers no update |
+| OptionROM Data | `23.1051.0.0` | `23.1051.0.0` | LVFS offers no update |
+| GuC | `70.40.2` → `70.65.0` | (host package `20250410` → `20260622`) | none |
+| HuC | `8.2.10` | `8.2.10` | none |
+
+Cab `intel-arc-bmg-21.1180.cab`, sha256 `a4dedea0…5637`. Note that a single
+`fwupdmgr update` against the **FWCODE** device flashes the **OptionROM too** —
+both payloads ride in the same cab — and neither reads as live until a full
+power cycle.
+
+The same flash was checked against all three known problems on this hardware:
+
+| Problem | Fixed by the firmware? | Why not |
+|---|---|---|
+| VAAPI `SIGBUS` in `vaInitialize` | **No** | userspace allocation placement in `iHD_drv_video.so`; firmware cannot reach it |
+| BAR2 stuck at 256 MB, resize fails `-ENOSPC` | **No** | a *host* bridge BAR0 pins the root port window; the card already advertises 256MB..16GB |
+| Vulkan falls back to `llvmpipe` | **No** | OS configuration — the user is not in the `render` group |
+
+Scope note: because the patched driver stayed installed and the patch is inert
+on a full BAR (see below), this did not re-run the stock driver on the new
+firmware. The claim rests on the mechanism, not a fresh reproduction.
 - **`intel_iommu=off`.** No effect. (It does silence unrelated recurring DMAR
   invalidation errors on older VT-d platforms, but that is a separate issue.)
 - **Newer `intel-media-va-driver`.** Upstream reports the same crash on 26.1.4.

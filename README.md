@@ -172,6 +172,37 @@ If you want to actually enlarge the window, those are separate avenues:
 All three are independent of this package. This fix is what stops the crash;
 those are what recover the performance.
 
+### What the small BAR actually costs you
+
+More than a percentage of throughput — some workloads fail outright.
+
+The BAR aperture appears in Vulkan as a separate heap: device-local **and**
+host-visible. On a small-BAR system it is tiny:
+
+```
+memoryHeaps[0]   11.68 GiB   DEVICE_LOCAL                  budget 10.27 GiB
+memoryHeaps[2]  256.00 MiB   DEVICE_LOCAL | HOST_VISIBLE   budget   4.00 MiB
+```
+
+Heap 2 is the aperture. With Resizable BAR working it would be ~11.68 GiB.
+Anything needing CPU-writable device memory is confined to what is left of
+256 MB. Measured on an Arc B580 (a 4K NV12 frame is 12.4 MB, against a
+4 MiB budget):
+
+| Workload | Result |
+|---|---|
+| `gblur_vulkan` 1080p | works |
+| `gblur_vulkan` 4K | works (single filter fits) |
+| `gblur_vulkan,nlmeans_vulkan` 4K | **fails: `-12 Cannot allocate memory`** |
+
+Media encode/decode is unaffected — the media engines do not depend on the
+CPU-visible aperture, which is why VAAPI works fully once this package is
+installed while Vulkan compute still hits a wall.
+
+So: this package fixes the crash and restores all media functionality. It does
+not restore Vulkan compute headroom above the aperture — only enlarging the
+BAR does that.
+
 ## Build it yourself
 
 ```bash

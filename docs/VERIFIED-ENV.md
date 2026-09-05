@@ -9,7 +9,8 @@
   VRAM visible: 256MiB of 12216MiB total (measured on kernel 6.12 via
     /sys/kernel/debug/dri/0/vram_mm; that node does NOT exist on kernel 7.1.8 --
     use the lspci Resizable BAR line above to detect small BAR instead)
-  Board: X9DRH-7TF/7F/iTF/iF, BIOS 3.2  06/04/2015
+  Board: dual-socket Ivy Bridge-EP server board, BIOS dated 2015
+         (predates Resizable BAR entirely -- hence the small BAR condition)
 
 ## Kernel
   7.1.8+deb13-amd64
@@ -43,3 +44,43 @@
   performance costs remain.
 * Minimum requirement is simply: Intel dGPU on the `xe` kernel driver with
   cpu_visible_size < total VRAM.
+
+## PCIe link — not a fault
+
+The GPU sits behind an on-package PCIe switch, so `lspci` shows four devices:
+
+| | root port | card upstream | card downstream | GPU |
+|---|---|---|---|---|
+| LnkCap | 8GT/s x16 | 16GT/s x8 | 2.5GT/s x1 | 2.5GT/s x1 |
+| LnkSta | 8GT/s x8 | 8GT/s x8 | 2.5GT/s x1 | 2.5GT/s x1 |
+| EqualizationComplete | + | + | - | - |
+| DLActive | + | + | - | - |
+
+The two "2.5GT/s x1" entries are **internal die-level ports**, not trained
+electrical links: no equalization, no Data Link Layer Active, no slot or
+common clock, and `LnkCap2` advertising 2.5GT/s as their only supported
+speed. They are hardcoded minimums with no PHY behind them.
+
+Do not mistake these for a degraded link. Read the **card's upstream port**
+instead. Confirmed empirically: four parallel 4K nv12 upload streams
+sustained ~2200 MB/s host-to-device, 8.8x the 250 MB/s theoretical ceiling
+of a real Gen1 x1 link.
+
+The reference platform is an Ivy Bridge-EP root port whose silicon ceiling
+is Gen3, so `8GT/s (downgraded)` on a Gen4 card is expected, and x8 is the
+card's native width. PCIe 3.0 x8 is the correct maximum there.
+
+## Small BAR consequences beyond this fix
+
+The BAR aperture is exposed as a Vulkan heap that is both DEVICE_LOCAL and
+HOST_VISIBLE. On a small-BAR system it is ~256 MB rather than full VRAM,
+which makes some Vulkan compute workloads fail with `-12 ENOMEM` rather than
+merely run slower. Media engines are unaffected. See README for measurements.
+
+The kernel attempts a BAR resize at every boot and reports
+`Failed to resize BAR2 ... (-ENOSPC)` followed by `Small BAR device` when
+firmware has laid the bridge windows out too tightly. On the reference
+platform the ACPI _CRS window has ample free space and both bridges decode
+64-bit prefetchable memory (`decode_type=1`, upper32 populated), so
+`pci=realloc` is a well-founded thing to try. lspci may tag the window
+`[32-bit]`; that is a display quirk -- read the config-space registers.

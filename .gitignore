@@ -1,0 +1,4 @@
+build/
+*.buildinfo
+*.changes
+*-dbgsym_*.deb

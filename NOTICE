@@ -1,0 +1,21 @@
+This repository redistributes a build of intel-media-driver.
+
+Upstream:  https://github.com/intel/media-driver
+License:   MIT (Expat), with some BSD-3-clause components.
+           See debian/copyright in the Debian source package, and
+           /usr/share/doc/intel-media-va-driver-non-free/copyright
+           in the installed package.
+
+Copyright (c) 2007-2024 Intel Corporation and contributors.
+
+Debian classifies this package as "non-free" because prebuilt shader
+kernels ship without source (a DFSG matter). This is NOT a restriction
+on redistribution -- the MIT license expressly permits copying,
+modification, publication, distribution and sublicensing.
+
+The patch in patches/ is upstream Intel's work (commit c3e1867,
+authored by KevinKickass) and is carried here unmodified.
+
+The packaging metadata (debian/*) originates from the Debian Project.
+The scripts and documentation added by this repository are released
+under the MIT license.

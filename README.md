@@ -10,7 +10,7 @@ Fix commit: [`c3e1867`](https://github.com/intel/media-driver/commit/c3e1867d6de
 Debian 13 ships `intel-media-va-driver-non-free 25.2.3`, which predates the fix.
 This repo backports it as a clean quilt patch on Debian's own source package.
 
-![Intel Arc B580 Limited Edition, exploded view](docs/img/intel-arc-b580-press.jpg)
+![Intel Arc B580 Limited Edition](docs/img/intel-arc-b580-press.jpg)
 
 <sub>Intel Arc B580 Limited Edition. Photo © Intel Corporation, from Intel's newsroom press kit for the Arc B-Series launch (Dec 2024), reproduced with credit. Not covered by the terms in NOTICE.</sub>
 

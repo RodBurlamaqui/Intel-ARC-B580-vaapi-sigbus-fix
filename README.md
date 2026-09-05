@@ -10,6 +10,12 @@ Fix commit: [`c3e1867`](https://github.com/intel/media-driver/commit/c3e1867d6de
 Debian 13 ships `intel-media-va-driver-non-free 25.2.3`, which predates the fix.
 This repo backports it as a clean quilt patch on Debian's own source package.
 
+![Intel Arc B580 Limited Edition, exploded view](docs/img/intel-arc-b580-press.jpg)
+
+<sub>Intel Arc B580 Limited Edition. Photo © Intel Corporation, from Intel's newsroom press kit for the Arc B-Series launch (Dec 2024), reproduced with credit. Not covered by the terms in NOTICE.</sub>
+
+![Why VAAPI crashed on a small-BAR card and what the fix changes](docs/img/vaapi-sigbus-small-bar.svg)
+
 ## Symptom
 
 ```
@@ -154,7 +160,9 @@ The fix makes the driver allocate where the CPU can reach; it does not change
 the BAR window. Small-BAR performance costs remain, and `dmesg` will still
 report `Small BAR device` after installing — that is expected.
 
-If you want to actually enlarge the window, those are separate avenues:
+If you want to actually enlarge the window — the companion project
+[Intel-ARC-Rebar](https://github.com/RodBurlamaqui/Intel-ARC-Rebar) does exactly that, at boot, without
+firmware modification, and was developed on this same card. Other avenues:
 
 1. **Enable Resizable BAR in your BIOS/UEFI**, if it offers it. Most boards
    from ~2020 onward do. Also enable *Above 4G Decoding*, which is required.

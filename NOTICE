@@ -19,3 +19,9 @@ authored by KevinKickass) and is carried here unmodified.
 The packaging metadata (debian/*) originates from the Debian Project.
 The scripts and documentation added by this repository are released
 under the MIT license.
+
+The photo docs/img/intel-arc-b580-press.jpg is (c) Intel Corporation, from
+Intel's newsroom press kit for the Arc B-Series launch (December 2024), and is
+reproduced with credit. It is not covered by the MIT terms above.
+The diagram docs/img/vaapi-sigbus-small-bar.svg is original artwork of this
+repository, released under the MIT license like the rest of its own files.

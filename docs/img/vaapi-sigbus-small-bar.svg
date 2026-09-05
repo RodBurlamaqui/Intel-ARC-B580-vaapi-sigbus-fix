@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="500" viewBox="0 0 960 500" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#374151"/></marker></defs>
+  <rect x="0" y="0" width="960" height="500" rx="14" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="480" y="36" text-anchor="middle" font-size="20" font-weight="700" fill="#111827">Why VAAPI crashed with SIGBUS on a small-BAR Intel Arc — and what the patched driver changes</text>
+
+  <!-- VRAM map -->
+  <text x="40" y="70" font-size="13" fill="#374151">The card's 12 GB of VRAM, as the CPU sees it on a board without Resizable BAR:</text>
+  <rect x="40" y="80" width="880" height="46" rx="5" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+  <rect x="42" y="82" width="19" height="42" fill="#bbf7d0" stroke="#047857"/>
+  <rect x="61" y="82" width="857" height="42" fill="#e5e7eb"/>
+  <text x="490" y="108" text-anchor="middle" font-size="12.5" fill="#4b5563">the other ~11.75 GB — the GPU can use it, but the CPU has no address for any of it</text>
+  <line x1="51" y1="128" x2="51" y2="146" stroke="#047857" stroke-width="1.5"/>
+  <text x="56" y="150" font-size="12" fill="#047857" font-weight="700">256 MB CPU-visible window (the “BAR aperture”) — the only part the CPU can touch</text>
+
+  <line x1="40" y1="170" x2="920" y2="170" stroke="#e5e7eb"/>
+
+  <!-- BEFORE -->
+  <text x="40" y="196" font-size="15" font-weight="700" fill="#b91c1c">BEFORE — stock intel-media-driver 25.2.3</text>
+  <g font-size="12.5" fill="#111827">
+    <rect x="40" y="208" width="270" height="34" rx="6" fill="#f3f4f6" stroke="#9ca3af"/><text x="175" y="230" text-anchor="middle">vaInitialize → driver allocates a buffer in VRAM</text>
+    <line x1="310" y1="225" x2="338" y2="225" stroke="#374151" stroke-width="1.5" marker-end="url(#a)"/>
+    <rect x="340" y="208" width="250" height="34" rx="6" fill="#e5e7eb" stroke="#9ca3af"/><text x="465" y="230" text-anchor="middle">placed anywhere — usually outside the 256 MB</text>
+    <line x1="590" y1="225" x2="618" y2="225" stroke="#374151" stroke-width="1.5" marker-end="url(#a)"/>
+    <rect x="620" y="208" width="300" height="34" rx="6" fill="#fee2e2" stroke="#b91c1c"/><text x="770" y="230" text-anchor="middle" font-weight="700" fill="#7f1d1d">CPU mmaps it, first touch → SIGBUS</text>
+  </g>
+  <rect x="40" y="252" width="880" height="24" rx="4" fill="#fef2f2" stroke="#fca5a5"/>
+  <text x="48" y="268" font-size="11.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#7f1d1d">$ vainfo --display drm --device /dev/dri/renderD128   →   Bus error   (SIGBUS, si_code=BUS_ADRERR, exit 135) — ffmpeg VAAPI dies the same way</text>
+  <text x="40" y="296" font-size="12" fill="#374151">The mmap itself succeeds; there is simply no physical address behind that page from the CPU's side. Not fixed by a newer kernel, newer firmware, or intel_iommu=off — it is a userspace placement bug.</text>
+
+  <line x1="40" y1="312" x2="920" y2="312" stroke="#e5e7eb"/>
+
+  <!-- AFTER -->
+  <text x="40" y="338" font-size="15" font-weight="700" fill="#047857">AFTER — this package: upstream fix c3e1867 backported onto Debian 13's 25.2.3</text>
+  <g font-size="12.5" fill="#111827">
+    <rect x="40" y="350" width="270" height="34" rx="6" fill="#f3f4f6" stroke="#9ca3af"/><text x="175" y="372" text-anchor="middle">at init: cpu_visible_size &lt; total_size ?</text>
+    <line x1="310" y1="367" x2="338" y2="367" stroke="#374151" stroke-width="1.5" marker-end="url(#a)"/>
+    <rect x="340" y="350" width="250" height="34" rx="6" fill="#d1fae5" stroke="#047857"/><text x="465" y="372" text-anchor="middle">small BAR → flag NEEDS_VISIBLE_VRAM</text>
+    <line x1="590" y1="367" x2="618" y2="367" stroke="#374151" stroke-width="1.5" marker-end="url(#a)"/>
+    <rect x="620" y="350" width="300" height="34" rx="6" fill="#bbf7d0" stroke="#047857"/><text x="770" y="372" text-anchor="middle" font-weight="700" fill="#065f46">buffers land inside the 256 MB — CPU access works</text>
+  </g>
+  <text x="40" y="404" font-size="12" fill="#374151">If the visible window is full, the kernel spills to system memory instead of crashing. On a full-BAR card the flag is a no-op, so the patched driver is harmless there too.</text>
+  <rect x="40" y="416" width="880" height="24" rx="4" fill="#f0fdf4" stroke="#86efac"/>
+  <text x="48" y="432" font-size="11.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#065f46">$ vainfo … → exit 0, 39 codec profiles.   H.264 / HEVC / AV1 encode and decode run; drm-cycles-vcs climbs instead of staying at 0.</text>
+  <text x="40" y="466" font-size="11.5" fill="#6b7280">This package stops the crash; it does not enlarge the 256 MB window. To recover the full aperture, see the companion project Intel-ARC-Rebar.</text>
+  <text x="920" y="488" text-anchor="end" font-size="10.5" fill="#9ca3af">github.com/RodBurlamaqui/Intel-ARC-B580-vaapi-sigbus-fix</text>
+</svg>

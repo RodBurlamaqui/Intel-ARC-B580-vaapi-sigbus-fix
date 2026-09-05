@@ -5,6 +5,10 @@
   86:00.0 VGA compatible controller [0300]: Intel Corporation Battlemage G21 [Arc B580] [8086:e20b]
   	Subsystem: ASRock Incorporation Device [1849:6021]
   PCIe link: Speed 8GT/s (downgraded), Width x8
+  GPU firmware: FWCODE 21.1182, OptionROM code 23.1066.0.0,
+    FWDATA 203.1, OptionROM data 23.1051.0.0
+    (SIGBUS reproduced identically on the previous FWCODE 21.1137 /
+     OptionROM 23.1051.0.0 -- firmware level is NOT a factor)
   BAR2 (small BAR condition): BAR 2: current size: 256MB, supported: 256MB 512MB 1GB 2GB 4GB 8GB 16GB
   VRAM visible: 256MiB of 12216MiB total (measured on kernel 6.12 via
     /sys/kernel/debug/dri/0/vram_mm; that node does NOT exist on kernel 7.1.8 --
@@ -39,6 +43,9 @@
 * Kernel 7.1.8 and firmware 20260622 are likewise NOT required. The SIGBUS
   reproduced identically on stock Debian 13 kernel 6.12.107 with firmware
   20250410. The bug is purely userspace allocation placement.
+* The GPU firmware level is not a factor either. Verified across FWCODE
+  21.1137 and 21.1182 and OptionROM 23.1051.0.0 and 23.1066.0.0. Do not flash
+  the card hoping to avoid this fix.
 * The 256MB BAR is unchanged by this fix. The driver stops placing buffers
   outside the CPU-visible window; it does not enlarge the window. Small-BAR
   performance costs remain.

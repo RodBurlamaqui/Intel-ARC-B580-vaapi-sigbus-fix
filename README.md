@@ -146,6 +146,9 @@ Ruled out by direct testing on this hardware — save yourself the reboots:
 
 - **Newer kernel.** Identical SIGBUS on 6.12.107 and 7.1.8.
 - **Newer GuC/HuC firmware.** Identical on 20250410 and 20260622 (GuC 70.40.2 → 70.65.0).
+- **Newer GPU firmware (FWCODE / OptionROM).** Identical on FWCODE 21.1137 and
+  21.1182, and on OptionROM code 23.1051.0.0 and 23.1066.0.0 (LVFS, Sept 2026).
+  The crash is in `iHD_drv_video.so`; no firmware image reaches that code path.
 - **`intel_iommu=off`.** No effect. (It does silence unrelated recurring DMAR
   invalidation errors on older VT-d platforms, but that is a separate issue.)
 - **Newer `intel-media-va-driver`.** Upstream reports the same crash on 26.1.4.
@@ -159,6 +162,13 @@ This is purely a userspace allocation-placement bug.
 The fix makes the driver allocate where the CPU can reach; it does not change
 the BAR window. Small-BAR performance costs remain, and `dmesg` will still
 report `Small BAR device` after installing — that is expected.
+
+Conversely, if something else *does* enlarge the window, this patch goes inert
+rather than conflicting: the detection compares `cpu_visible_size` against
+`total_size`, so on a full BAR `has_small_bar` is false and
+`NEEDS_VISIBLE_VRAM` is never set. Keep it installed anyway — it is what covers
+you before the window is enlarged during boot, and on any boot where that does
+not happen (`norebar`, rescue, or live media).
 
 If you want to actually enlarge the window — the companion project
 [Intel-ARC-Rebar](https://github.com/RodBurlamaqui/Intel-ARC-Rebar) does exactly that, at boot, without

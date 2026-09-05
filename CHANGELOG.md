@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — docs
+
+GPU firmware ruled out by direct test (FWCODE 21.1137 → 21.1182, OptionROM
+23.1051.0.0 → 23.1066.0.0; LVFS, Sept 2026) and recorded in the verified
+environment, which previously omitted the card's own firmware level.
+
+Documented that the patch becomes a no-op on a full BAR — `has_small_bar` is
+false once `cpu_visible_size == total_size` — and should be kept installed
+regardless, since it covers early boot, `norebar`, rescue and live media.
+
 ## 25.2.3+ds1-1+smallbar1
 
 Backports upstream commit

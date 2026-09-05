@@ -29,6 +29,23 @@ Intel **discrete** GPU on the `xe` kernel driver where the CPU-visible VRAM
 window is smaller than total VRAM — i.e. Resizable BAR is off, or your
 motherboard predates it.
 
+The quickest check — the kernel says so outright:
+
+```bash
+sudo dmesg | grep -iE 'Small BAR|resize bar'
+```
+
+```
+xe 0000:86:00.0: [drm] Attempting to resize bar from 256MiB -> 16384MiB
+xe 0000:86:00.0: [drm] Failed to resize BAR2 to 16384MiB (-ENOSPC).
+                       Consider enabling 'Resizable BAR' support in your BIOS
+xe 0000:86:00.0: [drm] Small BAR device
+```
+
+`Small BAR device` means this package applies to you.
+
+You can also read it from PCI config space:
+
 ```bash
 lspci -nn | grep -i vga            # find your GPU's address, e.g. 86:00.0
 sudo lspci -vv -s 86:00.0 | grep -A1 'Resizable BAR'
@@ -134,10 +151,26 @@ This is purely a userspace allocation-placement bug.
 ### This does not enlarge your BAR
 
 The fix makes the driver allocate where the CPU can reach; it does not change
-the BAR window. Small-BAR performance costs remain. To actually enlarge the
-window on a board without ReBAR firmware support, see
-[this initramfs `setpci` approach](https://gist.github.com/andersevenrud/eec93e9151117bc0d6b6133b40eaffa5)
-— independent of this fix.
+the BAR window. Small-BAR performance costs remain, and `dmesg` will still
+report `Small BAR device` after installing — that is expected.
+
+If you want to actually enlarge the window, those are separate avenues:
+
+1. **Enable Resizable BAR in your BIOS/UEFI**, if it offers it. Most boards
+   from ~2020 onward do. Also enable *Above 4G Decoding*, which is required.
+2. **`pci=realloc` on the kernel command line.** The kernel already attempts
+   the resize on its own and fails with `-ENOSPC` when firmware has laid out
+   the bridge windows too tightly; this flag lets it re-lay them out. Note it
+   reallocates resources for every device on the bus, so keep console access
+   (IPMI/BMC or physical) available the first time you boot with it.
+3. **A ReBarUEFI firmware mod**, or an initramfs `setpci` approach such as
+   [this one for a SuperMicro board with an Arc B580](https://gist.github.com/andersevenrud/eec93e9151117bc0d6b6133b40eaffa5).
+   The `setpci` route must run before the `xe` driver binds, so a runtime
+   `resource2_resize` write after boot will not work — the bridge windows are
+   already sized by then.
+
+All three are independent of this package. This fix is what stops the crash;
+those are what recover the performance.
 
 ## Build it yourself
 
